@@ -1,7 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import os
-import numpy as np
+import chardet
 
 def get_input(prompt):
     return input(prompt)
@@ -9,7 +8,9 @@ def get_input(prompt):
 def read_file(file_path):
     print("파일을 읽는 중입니다.")
     try:
-        data = pd.read_csv(file_path)
+        with open(file_path, 'rb') as f:
+            result = chardet.detect(f.read())
+        data = pd.read_csv(file_path, encoding=result['encoding'])
         print("파일이 성공적으로 불러와졌습니다.")
     except Exception as e:
         print(f"파일을 불러오는 중 에러가 발생했습니다: {e}")
