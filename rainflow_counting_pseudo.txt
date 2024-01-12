@@ -1,3 +1,5 @@
+Write in python code:
+
 For all functions, notify the user for the specific errors.
 For all functions, notify the user for what is happening for each of the steps, 
 showing which of the if else cases was chosen.
@@ -5,6 +7,7 @@ showing which of the if else cases was chosen.
 Ask the user for file_path to read a csv file.
 Remove any quotation marks or any other characters that will cause an error while defining a path and file name.
 If the csv file is not in csv format, then convert the file into csv encoding utf-8.
+Do not use an external library for detecting if it is utf-8.
 Then ask the user for the x_name for the x_axis. 
 Then ask the user for multiple y_name for the y_axis, separated by comma.
 
@@ -25,10 +28,10 @@ The sampling rate is calculated by counting the number of blanks between the val
 If there is an even number of blanks, or number of blanks not listed above, or if there are more than 15 blanks, 
 it is an error, notify the user, for which y_axis the specific sampling rate error occurred.
 If there is no blank rows between values, then the parameter's sampling rate is 16.
-If there is one, then it is 8.
-If there are three, then it is 4.
-If there are seven, then it is 2.
-If there are fifteen, then it is 1.
+If there is 1, then it is 8.
+If there are 3, then it is 4.
+If there are 7, then it is 2.
+If there are 15, then it is 1.
 
 In the new csv file, 
 if the values for the y_axis columns repeat with exactly the same values more than twice,
