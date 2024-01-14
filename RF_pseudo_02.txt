@@ -1,0 +1,54 @@
+This is the rules you are to follow:
+Check for syntax errors and unmatched parenthesis
+코멘트 작성할 때 한글로 개조식으로 작성해줘.
+Make a comment for all functions,
+first line of comment is a brief description,
+the next lines should detail the input and output of the function.
+If the function is more than 5 lines, then comment each of the steps
+
+For all functions, notify the user for the specific errors.
+For all functions, notify the user for what is happening for each of the steps, 
+showing which of the if else cases was chosen.
+
+
+Write in python code:
+Ask the user for file_path to read a csv file, remove quotations in the file path.
+Ask the user for the x_name for the x_axis. 
+Then ask the user for multiple y_name for the y_axis, separated by comma.
+
+Then create a new csv file in the same directory as the csv file, prefixed, "[processed]".
+Delete all columns that were not addressed by the user.
+
+In the new csv file,
+The first row contains the parameter names,
+then the second row contains the units.
+Starting from the third row to the end are the "flt_data".
+
+If the column is named "TIME", convert its "flt_data", which is formatted HH:MM:SS.FFF, into miliseconds.
+HH means Hour, MM means Mintues, SS means Seconds, FFF means miliseconds.
+Check if the "flt_data" values are float, if not, show message and convert to float.
+
+Then if a float value in the y_axis columns repeat exactly more than twice in a row,
+unless it is 0, replace all the matching values with the lowest value in that column.
+
+Then for all the rows in the "flt_data" of the y_axis,
+that do not contain a value or is blank,
+unless it is the third or the last row,
+fill the row with the average of previous and next occurring value.
+
+Then from the new csv file, create a dictionary named, "data_dict".
+Store the names of the x_axis and y_axis as keys(strings).
+Then store corresponding units as values(strings), which is the second row in the csv file.
+Then store corresponding data as a list(float) inside the dictionary as a value,
+which is starting from the third row.
+
+Draw a separate graph for each of the y_axis, with the x_axis as the x, and the y_axis as the y.
+Show the graphs in the same window.
+The labels for x should be converted to HH:MM.
+Use different colors for each of the graph lines.
+Center align on the top of the graph the name of the y_axis.
+Make each graph's width 1200px, height 800px.
+The Y axis should be notched in 15 even lines.
+The X axis should be notched in 20 even lines.
+
+Call the functions from main.
