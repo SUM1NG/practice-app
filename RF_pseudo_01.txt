@@ -1,0 +1,55 @@
+Write in python code:
+make sure to check for syntax errors and unmatched parenthesis
+Make a comment for all functions,
+first line of comment is a brief description,
+the next lines should detail the input and output of the function.
+If the function is more than 5 lines, then comment each of the steps
+
+For all functions, notify the user for the specific errors.
+For all functions, notify the user for what is happening for each of the steps, 
+showing which of the if else cases was chosen.
+
+Ask the user for file_path to read a csv file.
+Remove any characters from the path or file name that will cause an error.
+If the csv file is not in csv format, then convert the file into csv file.
+Ask the user for the x_name for the x_axis. 
+Then ask the user for multiple y_name for the y_axis, separated by comma.
+
+Then read the csv file.
+The first row of the csv file contains the names of parameters.
+The second row contains the units of said parameters.
+Then from the third row, data is stored till the final row.
+
+Then create a new csv file in the same directory, prefixed, "[processed]".
+Delete all columns that were not addressed by the user.
+
+Add a row after second row.
+The sampling rate is calculated by counting the number of blanks between the values for each of the y_axis.
+If there is an even number of blanks, or number of blanks not listed above, or if there are more than 15 blanks, 
+it is an error, notify the user, for which y_axis the specific sampling rate error occurred.
+If there is no blank rows between values, then the parameter's sampling rate is 16.
+If there is 1, then it is 8.
+If there are 3, then it is 4.
+If there are 7, then it is 2.
+If there are 15, then it is 1.
+
+In the new csv file, 
+if the values for the y_axis columns repeat with exactly the same values more than twice,
+unless it is 0, replace the values with the lowest value in that column.
+Then for all the rows that do not contain a value in the y_axis columns,
+unless it is the first or the last row, fill the rows with the average of values before and after.
+But account for when there are consecutive blank spaces, use the next occurring value.
+
+Then from the new csv file, create a dictionary named, "data_dict".
+Store the names of the x_axis and y_axis as keys.
+Then store corresponding units as value.
+Then store corresponding sampling rate as the next value.
+Then store corresponding data as value, making the data as a list inside the dictionary.
+
+Draw a graph with the x_axis and y_axis, use different colors for each of the y_axis, and notate each of the graph lines to the corresponding y_name, having the name above the line, aligned to the right edge of the graph.
+Make the graph so that the width is 800px, height is 400px.
+The Y axis should be notched in 15 even lines.
+If there are negative values
+The X axis should be notched in 20 even lines.
+
+Apply a noise filter with adjustable limiter variable to the data.
