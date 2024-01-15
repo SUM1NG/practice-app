@@ -16,39 +16,38 @@ Ask the user for file_path to read a csv file, remove quotations in the file pat
 Ask the user for the x_name for the x_axis. 
 Then ask the user for multiple y_name for the y_axis, separated by comma.
 
-Then create a new csv file.
-In the same directory as the csv file, prefixed, "[processed]".
+Then create a new csv file in the same directory as the original file.
+Name it "[processed]" + original name + ".csv"
 Delete all columns that were not addressed by the user.
 Delete all blank spaces.
 Rearrange the columns in the order of x_name, then by y_names.
-Save the values of second row as string; for column x_name, save it as x_units,
-then the columns under y_names as y_units.
-Delete the row that contains x_name and y_names.
-Delete the row that contains x_units and y_units.
+Save the values of second row as string; 
+for column x_name, save it as x_units,
+then for columns under y_names, as y_units.
+Delete the first two rows.
 
-In the new csv file,
-Delete all blank spaces in all columns and rows.
-convert data corresponding to the x_name(the first column), formatted HH:MM:SS.FFF, into miliseconds(float).
+In the new csv file, do not use datetime library,
+convert the first column, formatted HH:MM:SS.FFF, into miliseconds(float).
 HH means Hour, MM means Mintues, SS means Seconds, FFF means miliseconds.
-Check if the "flt_data" values are float, if not, show message and convert to float.
+Check if all values are float, if not, show message and convert to float.
 
-Convert all values under y_names into float.
-Then if a float value in the y_names columns repeat exactly more than twice in a row,
+Then for every column y_names, if a value inside the column repeat more than twice in a row,
 unless it is 0, replace all the matching values with the lowest value in that column.
 
-Then for all the rows in each of the y_names, that do not contain a value or is blank,
+Then for all the blank rows in each of the y_names,
 fill the row with the average of previous and next occurring value.
 If it is the first row, then input the next occuring value.
 If it is the last row, then input the previous occuring value.
 
-Then from the new csv file, create a dictionary named, "data_dict".
-Store the names of the x_axis and y_axis as keys(strings).
-Then store corresponding x_units and y_units as values(strings).
-Then store corresponding data as a list of floats inside the dictionary as a value.
+Create a dictionary named, "data_dict".
+Store x_name and y_names as keys(strings).
+Then store x_units and y_units as values(strings).
+Then from the new csv file, 
+store corresponding data as a list of floats inside the dictionary as a value.
 
 Draw a separate graph for each of the y_axis, with the x_axis as the x, and the y_axis as the y.
 Show the graphs side by side in the same window.
-The labels for x should be converted from miliseconds to HH:MM.
+The labels for x should be converted from miliseconds to HH:MM, round up.
 Use different colors for each of the graph lines.
 Center align on the top of the graph the name of the y_axis.
 Make the window fill the whole screen.
