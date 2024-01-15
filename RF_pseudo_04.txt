@@ -1,0 +1,57 @@
+This is the rules you are to follow:
+Check for syntax errors and unmatched parenthesis
+코멘트 작성할 때 한글로 개조식으로 작성해줘.
+Make a comment for all functions,
+first line of comment is a brief description,
+the next lines should detail the input and output of the function.
+If the function is more than 5 lines, then comment each of the steps
+
+For all functions, notify the user for the specific errors.
+For all functions, notify the user for what is happening for each of the steps, 
+showing which of the if else cases was chosen.
+
+
+Write in python code:
+Ask the user for file_path to read a csv file, remove quotations in the file path.
+Ask the user for the x_name for the x_axis. 
+Then ask the user for multiple y_name for the y_axis, separated by comma.
+
+Then create a new csv file in the same directory as the original file.
+Name it "[processed]" + original name + ".csv"
+Delete all columns that were not addressed by the user.
+Delete all blank spaces.
+Rearrange the columns in the order of x_name, then by y_names.
+Save the values of second row as string; 
+for column x_name, save it as x_units,
+then for columns under y_names, as y_units.
+Delete the first two rows.
+
+In the new csv file, do not use datetime library,
+convert the first column, formatted HH:MM:SS.FFF, into miliseconds(float).
+HH means Hour, MM means Mintues, SS means Seconds, FFF means miliseconds.
+Check if all values are float, if not, show message and convert to float.
+
+Then for every column y_names, if a value inside the column repeat more than twice in a row,
+unless it is 0, replace all the matching values with the lowest value in that column.
+
+Then for all the blank rows in each of the y_names,
+fill the row with the average of previous and next occurring value.
+If it is the first row, then input the next occuring value.
+If it is the last row, then input the previous occuring value.
+
+Create a dictionary named, "data_dict".
+Store x_name and y_names as keys(strings).
+Then store x_units and y_units as values(strings).
+Then from the new csv file, 
+store corresponding data as a list of floats inside the dictionary as a value.
+
+Draw a separate graph for each of the y_axis, with the x_axis as the x, and the y_axis as the y.
+Show the graphs side by side in the same window.
+The labels for x should be converted from miliseconds to HH:MM, round up.
+Use different colors for each of the graph lines.
+Center align on the top of the graph the name of the y_axis.
+Make the window fill the whole screen.
+The Y axis should be notched in 15 even lines.
+The X axis should be notched in 20 even lines.
+
+Call the functions from main.
