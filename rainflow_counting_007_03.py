@@ -3,27 +3,23 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from pykalman import KalmanFilter
+import sys
+from filterpy.kalman import KalmanFilter
 
 # 시간 문자열(HH:MM:SS.FFF)을 밀리초로 변환하는 함수
 def time_str_to_milliseconds(time_str):
-    """
-    시간 문자열 milisecond로 변환
-    입력: 시간 문자열(HH:MM:SS.FFF 형식, string)
-    출력: milisecond(float)
-    """
-    h, m, rest = time_str.split(':')
-    s, ms = map(float, rest.split('.'))
-    milliseconds = ((int(h) * 60 + int(m)) * 60 + s) * 1000 + ms
+    # 예외 처리 추가
+    try:
+        h, m, rest = time_str.split(':')
+        s, ms = map(float, rest.split('.'))
+        milliseconds = ((int(h) * 60 + int(m)) * 60 + s) * 1000 + ms
+    except ValueError:
+        print("오류: 시간 문자열이 'HH:MM:SS.FFF' 형식에 맞지 않습니다.")
+        return None
     return milliseconds
 
 # 데이터 처리하는 함수
 def process_data(file_path, x_name, y_names):
-    """
-    CSV 파일 읽고 데이터 처리
-    입력: 파일 경로, x 축 이름, y 축 이름(list)
-    출력: 처리된 데이터프레임, x 축 단위, y 축 단위(list)
-    """
     # 데이터 읽기
     df = pd.read_csv(file_path)
 
@@ -57,17 +53,12 @@ def process_data(file_path, x_name, y_names):
 
     # 빈 값은 앞뒤 값의 평균으로 대체
     for y_name in y_names:
-        df[y_name].interpolate(method='linear', limit_direction ='forward', inplace=True)
+        df[y_name].interpolate(method='linear', limit_direction ='both', inplace=True)
 
     return df, x_units, y_units
 
 # 데이터 그래프 그리는 함수
 def plot_data(df, x_name, y_names, x_units, y_units):
-    """
-    데이터프레임을 이용해 그래프를 그립니다.
-    입력: 데이터프레임, x 축 이름, y 축 이름들(list), x 축 단위, y 축 단위들(list)
-    출력: 없음
-    """
     # 그래프를 세로로 쌓음
     fig, axs = plt.subplots(len(y_names), 1, figsize=(35, 15))
 
@@ -86,23 +77,32 @@ def plot_data(df, x_name, y_names, x_units, y_units):
     plt.tight_layout()
     plt.show()
 
+# 칼만 필터 적용하는 함수
 def kalman_filter(df, y_names):
-    # 칼만 필터 적용
-    kf = KalmanFilter(initial_state_mean=0, n_dim_obs=1)
     for y_name in y_names:
-        measurements = df[y_name]
+        measurements = np.array(df[y_name])
+
+        # 칼만 필터 초기화
+        kf = KalmanFilter(dim_x=1, dim_z=1)
+        kf.F = np.array([[1.]])  # state transition matrix
+        kf.H = np.array([[1.]])  # measurement function
+        kf.x = np.array([0.])  # initial state
+        kf.P *= 1000.  # covariance matrix
+        kf.R = 5  # state uncertainty
+        kf.Q = 1  # process uncertainty
+
         # 칼만 필터 적용
-        _, kalman_smoothed = kf.smooth(measurements)
-        df[y_name] = kalman_smoothed
+        smoothed_state_means = np.zeros(measurements.shape)
+        for i in range(len(measurements)):
+            kf.predict()
+            kf.update(measurements[i])
+            smoothed_state_means[i] = kf.x
+
+        df[y_name] = smoothed_state_means.flatten()
 
     return df
 
 def main():
-    """
-    메인 함수입니다. 사용자로부터 필요한 정보를 입력받고, 데이터 처리 및 그래프 그리기를 수행합니다.
-    입력: 없음
-    출력: 없음
-    """
     # 사용자로부터 필요한 정보 입력받기
     file_path = input("Enter the file path: ").replace('"', '')
     x_name = input("Enter the x-axis name: ").strip() # x_name에서 공백 제거
