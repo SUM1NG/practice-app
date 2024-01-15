@@ -16,7 +16,8 @@ Ask the user for file_path to read a csv file, remove quotations in the file pat
 Ask the user for the x_name for the x_axis. 
 Then ask the user for multiple y_name for the y_axis, separated by comma.
 
-Then create a new csv file in the same directory as the csv file, prefixed, "[processed]".
+Then create a new csv file.
+In the same directory as the csv file, prefixed, "[processed]".
 Delete all columns that were not addressed by the user.
 Delete all blank spaces.
 Rearrange the columns in the order of x_name, then by y_names.
