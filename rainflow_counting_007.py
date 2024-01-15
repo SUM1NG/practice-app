@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-from datetime import datetime
+#from datetime import datetime
 from matplotlib.ticker import MaxNLocator
 
 # 파일 경로를 입력받아 csv 파일 읽는 함수
@@ -20,6 +20,13 @@ def get_axis_names():
     # y축 이름 입력 받기
     y_names = input('y축의 이름을 입력해주세요(콤마로 구분): ').split(',')
     return x_name, y_names
+
+# 시간 문자열(HH:MM:SS.FFF)을 밀리초로 변환하는 함수
+def time_str_to_milliseconds(time_str):
+    h, m, rest = time_str.split(':')
+    s, ms = map(float, rest.split('.'))
+    milliseconds = ((int(h) * 60 + int(m)) * 60 + s) * 1000 + ms
+    return milliseconds
 
 # 데이터 처리하는 함수
 def process_data(df, x_name, y_names):
@@ -42,7 +49,7 @@ def process_data(df, x_name, y_names):
     df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
 
     # HH:MM:SS.FFF를 밀리초로 변환
-    df[x_name] = df[x_name].apply(lambda x: (datetime.strptime(x, "%H:%M:%S.%f") - datetime(1900, 1, 1)).total_seconds() * 1000)
+    df[x_name] = df[x_name].apply(time_str_to_milliseconds)
 
     # 데이터 타입 확인 및 변환
     df = df.astype(float, errors='raise')
@@ -57,6 +64,7 @@ def process_data(df, x_name, y_names):
 
     return df, x_units, y_units
 
+
 # 데이터를 그래프로 그리는 함수
 def draw_graphs(df, x_name, y_names, x_units, y_units):
     fig, axs = plt.subplots(len(y_names), sharex=True)
@@ -66,7 +74,7 @@ def draw_graphs(df, x_name, y_names, x_units, y_units):
         axs[i].set_title(y_name)
         axs[i].yaxis.set_major_locator(MaxNLocator(15))
         axs[i].xaxis.set_major_locator(MaxNLocator(20))
-        axs[i].xaxis.set_major_formatter(lambda x, _: str(datetime.timedelta(milliseconds=x)))
+        #axs[i].xaxis.set_major_formatter(lambda x, _: str(datetime.timedelta(milliseconds=x)))
     plt.show()
 
 def main():
