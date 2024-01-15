@@ -74,7 +74,7 @@ def convert_to_float(df, y_names):
     """
     for y_name in y_names:
         #if df[y_name].dtype != float: <-- not use numpy
-        if df[y_name].dtype != np.float64:    
+        if df.loc[2:,y_name].dtype != np.float64:    
             print(f"{y_name} 열의 데이터를 float 형식으로 변환합니다.")
             df[y_name] = df[y_name].astype(float)
     return df
@@ -154,7 +154,7 @@ def main():
     y_names = get_y_names()
     new_file_path = create_new_csv(df, file_path, x_name, y_names)
     df = convert_time_to_ms(df, x_name)
-    df = convert_to_float(df, y_names)
+    #df = convert_to_float(df, y_names)
     df = replace_repeated_values_with_min(df, y_names)
     df = fill_blank_with_average(df, y_names)
     data_dict = create_dict_from_csv(new_file_path, x_name, y_names)
