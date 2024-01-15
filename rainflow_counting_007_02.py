@@ -7,9 +7,9 @@ import os
 # 시간 문자열(HH:MM:SS.FFF)을 밀리초로 변환하는 함수
 def time_str_to_milliseconds(time_str):
     """
-    시간 문자열을 밀리초로 변환합니다.
-    입력: 시간 문자열(HH:MM:SS.FFF 형식)
-    출력: 밀리초(float)
+    시간 문자열 milisecond로 변환
+    입력: 시간 문자열(HH:MM:SS.FFF 형식, string)
+    출력: milisecond(float)
     """
     h, m, rest = time_str.split(':')
     s, ms = map(float, rest.split('.'))
@@ -19,9 +19,9 @@ def time_str_to_milliseconds(time_str):
 # 데이터 처리하는 함수
 def process_data(file_path, x_name, y_names):
     """
-    CSV 파일을 읽고 데이터를 처리합니다.
-    입력: 파일 경로, x 축 이름, y 축 이름들(list)
-    출력: 처리된 데이터프레임, x 축 단위, y 축 단위들(list)
+    CSV 파일 읽고 데이터 처리
+    입력: 파일 경로, x 축 이름, y 축 이름(list)
+    출력: 처리된 데이터프레임, x 축 단위, y 축 단위(list)
     """
     # 데이터 읽기
     df = pd.read_csv(file_path)
@@ -49,10 +49,19 @@ def process_data(file_path, x_name, y_names):
 
     # 데이터 타입 확인 및 변환
     df = df.astype(float, errors='raise')
-
+    """
     # 동일한 값이 2번 이상 연속으로 나오는 경우 최소값으로 대체
     for y_name in y_names:
-        df[y_name] = df[y_name].mask(df[y_name].eq(df[y_name].shift()) & df[y_name].eq(df[y_name].shift(-1)) & df[y_name].ne(0), df[y_name].min())
+       df[y_name] = df[y_name].mask(df[y_name].eq(df[y_name].shift()) & df[y_name].eq(df[y_name].shift(-1)) & df[y_name].ne(0), df[y_name].min())
+    """
+    # 중복 값을 찾아 NaN으로 대체
+    for y_name in y_names:
+        df.loc[df[y_name].eq(df[y_name].shift()) & df[y_name].eq(df[y_name].shift(-1)) & df[y_name].ne(0), y_name] = np.nan
+
+    # 중복 값이 NaN으로 대체된 후, 해당 열에서 두 번째로 작은 값을 찾아 대체
+    for y_name in y_names:
+        second_min = df[y_name].nsmallest(2).values[-1]
+        df[y_name].fillna(second_min, inplace=True)
 
     # 빈 값은 앞뒤 값의 평균으로 대체
     for y_name in y_names:
@@ -67,13 +76,20 @@ def plot_data(df, x_name, y_names, x_units, y_units):
     입력: 데이터프레임, x 축 이름, y 축 이름들(list), x 축 단위, y 축 단위들(list)
     출력: 없음
     """
-    fig, axs = plt.subplots(1, len(y_names), figsize=(15, 5), sharex=True)
+    # 그래프를 세로로 쌓음
+    fig, axs = plt.subplots(len(y_names), 1, figsize=(35, 15))
 
     for ax, y_name, y_unit in zip(axs, y_names, y_units):
         ax.plot(df[x_name], df[y_name])
         ax.set_title(y_name)
         ax.set_xlabel('Time (ms)')
         ax.set_ylabel(y_unit)
+
+        # 그래프에 세로선과 가로선 추가
+        ax.grid(True)
+
+        # 레이블을 왼쪽에 위치시킴
+        ax.yaxis.tick_left()
 
     plt.tight_layout()
     plt.show()
@@ -86,8 +102,8 @@ def main():
     """
     # 사용자로부터 필요한 정보 입력받기
     file_path = input("Enter the file path: ").replace('"', '')
-    x_name = input("Enter the x-axis name: ")
-    y_names = input("Enter the y-axis names (separated by comma): ").split(',')
+    x_name = input("Enter the x-axis name: ").strip() # x_name에서 공백 제거
+    y_names = [name.strip() for name in input("Enter the y-axis names (separated by comma): ").split(',')] # y_names에서 공백 제거
 
     # 데이터 처리
     df, x_units, y_units = process_data(file_path, x_name, y_names)
