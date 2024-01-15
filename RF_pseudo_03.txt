@@ -1,6 +1,6 @@
 This is the rules you are to follow:
 Check for syntax errors and unmatched parenthesis
-코멘트 작성할 때 한글로 개조식으로 작성해줘.
+반드시 코멘트 작성할 때 한글로 개조식으로 작성해줘.
 Make a comment for all functions,
 first line of comment is a brief description,
 the next lines should detail the input and output of the function.
@@ -28,7 +28,7 @@ Delete the row that contains x_units and y_units.
 
 In the new csv file,
 Delete all blank spaces in all columns and rows.
-convert data corresponding to the x_name(the first column), formatted HH:MM:SS.FFF, into miliseconds(float).
+convert data corresponding to the x_name(the first column), formatted "HH:MM:SS.FFF", into miliseconds(float).
 HH means Hour, MM means Mintues, SS means Seconds, FFF means miliseconds.
 Check if the "flt_data" values are float, if not, show message and convert to float.
 
