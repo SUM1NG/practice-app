@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from pykalman import KalmanFilter
 
 # 시간 문자열(HH:MM:SS.FFF)을 밀리초로 변환하는 함수
 def time_str_to_milliseconds(time_str):
@@ -49,19 +50,10 @@ def process_data(file_path, x_name, y_names):
 
     # 데이터 타입 확인 및 변환
     df = df.astype(float, errors='raise')
-    """
+    
     # 동일한 값이 2번 이상 연속으로 나오는 경우 최소값으로 대체
     for y_name in y_names:
        df[y_name] = df[y_name].mask(df[y_name].eq(df[y_name].shift()) & df[y_name].eq(df[y_name].shift(-1)) & df[y_name].ne(0), df[y_name].min())
-    """
-    # 중복 값을 찾아 NaN으로 대체
-    for y_name in y_names:
-        df.loc[df[y_name].eq(df[y_name].shift()) & df[y_name].eq(df[y_name].shift(-1)) & df[y_name].ne(0), y_name] = np.nan
-
-    # 중복 값이 NaN으로 대체된 후, 해당 열에서 두 번째로 작은 값을 찾아 대체
-    for y_name in y_names:
-        second_min = df[y_name].nsmallest(2).values[-1]
-        df[y_name].fillna(second_min, inplace=True)
 
     # 빈 값은 앞뒤 값의 평균으로 대체
     for y_name in y_names:
@@ -94,6 +86,17 @@ def plot_data(df, x_name, y_names, x_units, y_units):
     plt.tight_layout()
     plt.show()
 
+def kalman_filter(df, y_names):
+    # 칼만 필터 적용
+    kf = KalmanFilter(initial_state_mean=0, n_dim_obs=1)
+    for y_name in y_names:
+        measurements = df[y_name]
+        # 칼만 필터 적용
+        _, kalman_smoothed = kf.smooth(measurements)
+        df[y_name] = kalman_smoothed
+
+    return df
+
 def main():
     """
     메인 함수입니다. 사용자로부터 필요한 정보를 입력받고, 데이터 처리 및 그래프 그리기를 수행합니다.
@@ -112,8 +115,15 @@ def main():
     new_file_path = os.path.join(os.path.dirname(file_path), f"[processed]{os.path.basename(file_path)}")
     df.to_csv(new_file_path, index=False)
 
-    # 그래프 그리기
+    # Raw Data 그래프 그리기
     plot_data(df, x_name, y_names, x_units, y_units)
+
+    # Kalman Filter 적용
+    kdf = kalman_filter(df, y_names)
+
+    # Filtered Data 그래프 그리기
+    plot_data(kdf, x_name, y_names, x_units, y_units)
+
 
 if __name__ == "__main__":
     main()
