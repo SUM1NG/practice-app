@@ -1,137 +1,116 @@
-# 필요한 라이브러리를 불러옵니다.
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
 import os
-import datetime
+from math import ceil
 
-def get_inputs():
-    """
-    사용자로부터 파일 경로와 x축, y축의 이름을 입력 받습니다.
-    입력: 없음
-    출력: 파일 경로, x축 이름, y축 이름 리스트
-    """
-    file_path = input("CSV 파일 경로를 입력해주세요: ").replace('"', '')
-    x_name = input("x축의 이름을 입력해주세요: ")
-    y_names = input("y축의 이름을 입력해주세요(쉼표로 구분): ").split(',')
-    return file_path, x_name, y_names
+# 파일 경로를 입력받아 CSV 파일 읽기
+def read_csv_file():
+    file_path = input("CSV 파일 경로를 입력하세요: ").replace("\"", "")
+    try:
+        df = pd.read_csv(file_path)
+        print("CSV 파일을 성공적으로 읽었습니다.")
+        return df, file_path
+    except Exception as e:
+        print(f"CSV 파일을 읽는 중 오류가 발생했습니다: {e}")
+        return None, None
 
-def process_df(file_path, x_name, y_names):
-    """
-    CSV 파일을 읽고, 사용자가 지정한 열만 남기고 모두 삭제합니다. 
-    또한, 열의 순서를 조정하고, 빈 공간을 제거합니다.
-    입력: 파일 경로, x축 이름, y축 이름 리스트
-    출력: 처리된 DataFrame, x축 단위, y축 단위 리스트
-    """
-    df = pd.read_csv(file_path)
-    x_units = df.loc[1, x_name]
-    y_units = [df.loc[1, y_name] for y_name in y_names]
+# x축의 이름을 입력받기
+def get_x_name():
+    x_name = input("x축의 이름을 입력하세요: ")
+    print(f"x축의 이름을 {x_name}으로 설정합니다.")
+    return x_name
 
-    # 사용자가 지정하지 않은 열을 제거합니다.
+# y축의 이름들을 쉼표로 구분하여 입력받기
+def get_y_names():
+    y_names = input("y축의 이름들을 쉼표로 구분하여 입력하세요: ").split(",")
+    print(f"y축의 이름들을 {y_names}으로 설정합니다.")
+    return y_names
+
+# 새로운 CSV 파일 생성
+def create_new_csv(df, file_path, x_name, y_names):
+    # 새로운 CSV 파일의 이름 설정
+    new_file_name = "[processed]" + os.path.basename(file_path)
+    new_file_path = os.path.join(os.path.dirname(file_path), new_file_name)
+
+    # 사용자가 지정한 열만 남기기
     df = df[[x_name] + y_names]
+    print(f"데이터프레임의 열을 {x_name}, {y_names}만 남기도록 수정했습니다.")
 
-    # 빈 공간을 제거합니다.
-    df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)
+    # 공백 제거
+    df = df.replace(r'^\s*$', np.nan, regex=True)
+    print("데이터프레임의 모든 공백을 제거했습니다.")
 
-    # 열의 순서를 조정합니다.
-    df = df[[x_name] + y_names]
+    # 열 순서 재배열
+    df = df.reindex(columns=[x_name] + y_names)
+    print(f"데이터프레임의 열 순서를 {x_name}, {y_names} 순으로 재배열했습니다.")
 
-    # x_name, y_name, x_units, y_units가 포함된 행을 제거합니다.
-    df = df[df[x_name] != x_name]
-    df = df[df[x_name] != x_units]
+    # 단위 저장 후 첫 두 행 삭제
+    x_units = df[x_name][1]
+    y_units = {y_name: df[y_name][1] for y_name in y_names}
+    df = df.iloc[2:]
+    print("데이터프레임의 첫 두 행을 삭제했습니다.")
 
-    return df, x_units, y_units
+    # CSV 파일 저장
+    df.to_csv(new_file_path, index=False)
+    print(f"새로운 CSV 파일을 {new_file_path}에 저장했습니다.")
 
-def to_milliseconds(time_str):
-    """
-    시간 문자열(HH:MM:SS.FFF)을 밀리초로 변환합니다.
-    입력: 시간 문자열
-    출력: 밀리초(float)
-    """
-    h, m, s = map(float, time_str.split(':'))
-    return h*3600000 + m*60000 + s*1000
+    return df, new_file_path, x_units, y_units
 
-def process_data(df, x_name, y_names):
-    """
-    데이터를 처리합니다. 
-    x축 데이터를 밀리초로 변환하고, y축 데이터를 float으로 변환합니다.
-    입력: DataFrame, x축 이름, y축 이름 리스트
-    출력: 처리된 DataFrame
-    """
-    # x축 데이터를 밀리초로 변환합니다.
-    df[x_name] = df[x_name].apply(to_milliseconds)
-
-    # y축 데이터를 float으로 변환합니다.
-    for y_name in y_names:
-        df[y_name] = df[y_name].astype(float)
-
+# 시간을 밀리세컨드로 변환
+def convert_time_to_millis(df, x_name):
+    df[x_name] = df[x_name].apply(lambda x: sum(float(y) * 10 ** i for i, y in enumerate(reversed(x.split(":")))) * 1000)
+    print(f"{x_name} 열의 시간을 밀리세컨드로 변환했습니다.")
     return df
 
-def remove_duplicates(df, y_names):
-    """
-    y축에서 중복된 값을 제거합니다.
-    입력: DataFrame, y축 이름 리스트
-    출력: 중복된 값이 제거된 DataFrame
-    """
+# 연속적인 중복 값 처리
+def handle_consecutive_duplicates(df, y_names):
     for y_name in y_names:
-        df.loc[df[y_name].duplicated(keep=False) & df[y_name]!=0, y_name] = df[y_name].min()
+        df[y_name] = df[y_name].where(~(df[y_name] == df[y_name].shift(1) == df[y_name].shift(2)) | (df[y_name] == 0), df[y_name].min())
+    print(f"{y_names} 열의 연속적인 중복 값들을 처리했습니다.")
     return df
 
+# 빈 칸 채우기
 def fill_blanks(df, y_names):
-    """
-    y축에서 빈 값을 채웁니다.
-    입력: DataFrame, y축 이름 리스트
-    출력: 빈 값이 채워진 DataFrame
-    """
     for y_name in y_names:
-        df[y_name] = df[y_name].fillna((df[y_name].shift() + df[y_name].shift(-1))/2)
-        df[y_name].fillna(method='ffill', inplace=True)
-        df[y_name].fillna(method='bfill', inplace=True)
+        df[y_name].fillna(df[y_name].rolling(2, min_periods=1).mean(), inplace=True)
+    print(f"{y_names} 열의 빈 칸들을 채웠습니다.")
     return df
 
-def create_dict(df, x_name, y_names, x_units, y_units):
-    """
-    DataFrame을 딕셔너리로 변환합니다.
-    입력: DataFrame, x축 이름, y축 이름 리스트, x축 단위, y축 단위 리스트
-    출력: 데이터 딕셔너리
-    """
+# 데이터 딕셔너리 생성
+def create_data_dict(df, x_name, y_names, x_units, y_units):
     data_dict = {x_name: {'units': x_units, 'data': df[x_name].tolist()}}
-    for y_name, y_unit in zip(y_names, y_units):
-        data_dict[y_name] = {'units': y_unit, 'data': df[y_name].tolist()}
+    for y_name in y_names:
+        data_dict[y_name] = {'units': y_units[y_name], 'data': df[y_name].tolist()}
+    print("데이터 딕셔너리를 생성했습니다.")
     return data_dict
 
-def draw_graphs(data_dict, x_name, y_names):
-    """
-    데이터를 그래프로 그립니다.
-    입력: 데이터 딕셔너리, x축 이름, y축 이름 리스트
-    출력: 없음
-    """
-    fig, axs = plt.subplots(len(y_names), figsize=(10, 5*len(y_names)), sharex=True)
-    fig.subplots_adjust(hspace=0.5)
-
-    x_data = data_dict[x_name]['data']
-
-    for ax, y_name in zip(axs, y_names):
-        y_data = data_dict[y_name]['data']
-        ax.plot(x_data, y_data)
-        ax.set_title(y_name, loc='center')
-        ax.set_ylabel(y_name)
-        ax.set_xlabel(x_name)
-        ax.set_yticks(np.linspace(min(y_data), max(y_data), 15))
-        ax.set_xticks(np.linspace(min(x_data), max(x_data), 20))
-        ax.grid()
-
+# 그래프 그리기
+def draw_graph(data_dict, x_name, y_names):
+    fig, axs = plt.subplots(1, len(y_names), figsize=(15, 5))
+    for i, y_name in enumerate(y_names):
+        axs[i].plot(data_dict[x_name]['data'], data_dict[y_name]['data'])
+        axs[i].set_title(y_name)
+        axs[i].set_xlabel(x_name)
+        axs[i].set_ylabel(y_name)
+        axs[i].set_xticks(np.linspace(min(data_dict[x_name]['data']), max(data_dict[x_name]['data']), 20))
+        axs[i].set_yticks(np.linspace(min(data_dict[y_name]['data']), max(data_dict[y_name]['data']), 15))
     plt.tight_layout()
     plt.show()
+    print("그래프를 그렸습니다.")
 
 def main():
-    file_path, x_name, y_names = get_inputs()
-    df, x_units, y_units = process_df(file_path, x_name, y_names)
-    df = process_data(df, x_name, y_names)
-    df = remove_duplicates(df, y_names)
+    df, file_path = read_csv_file()
+    if df is None:
+        return
+    x_name = get_x_name()
+    y_names = get_y_names()
+    df, new_file_path, x_units, y_units = create_new_csv(df, file_path, x_name, y_names)
+    df = convert_time_to_millis(df, x_name)
+    df = handle_consecutive_duplicates(df, y_names)
     df = fill_blanks(df, y_names)
-    data_dict = create_dict(df, x_name, y_names, x_units, y_units)
-    draw_graphs(data_dict, x_name, y_names)
+    data_dict = create_data_dict(df, x_name, y_names, x_units, y_units)
+    draw_graph(data_dict, x_name, y_names)
 
 if __name__ == "__main__":
     main()
