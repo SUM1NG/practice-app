@@ -43,11 +43,11 @@ Then store corresponding data as a list(float) inside the dictionary as a value,
 which is starting from the third row.
 
 Draw a separate graph for each of the y_axis, with the x_axis as the x, and the y_axis as the y.
-Show the graphs in the same window.
-The labels for x should be converted to HH:MM.
+Show the graphs side by side in the same window.
+The labels for x should be converted from miliseconds to HH:MM.
 Use different colors for each of the graph lines.
 Center align on the top of the graph the name of the y_axis.
-Make each graph's width 1200px, height 800px.
+Make the window fill the whole screen.
 The Y axis should be notched in 15 even lines.
 The X axis should be notched in 20 even lines.
 
