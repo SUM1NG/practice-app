@@ -6,7 +6,7 @@ import os
 
 def read_csv_file():
     """
-    사용자로부터 csv 파일 경로를 입력받아, 해당 파일을 읽는 함수입니다.
+    사용자로부터 csv 파일 경로를 입력받아, 해당 파일을 읽는 함수
     입력: 없음
     출력: DataFrame 객체, 파일 경로
     """
@@ -17,7 +17,7 @@ def read_csv_file():
 
 def get_x_name():
     """
-    사용자로부터 X축의 이름을 입력받는 함수입니다.
+    사용자로부터 X축의 이름을 입력받는 함수
     입력: 없음
     출력: X축의 이름
     """
@@ -27,7 +27,7 @@ def get_x_name():
 
 def get_y_names():
     """
-    사용자로부터 Y축의 여러 이름을 입력받는 함수입니다.
+    사용자로부터 Y축의 여러 이름을 입력받는 함수
     입력: 없음
     출력: Y축의 이름 리스트
     """
@@ -37,10 +37,15 @@ def get_y_names():
 
 def create_new_csv(df, file_path, x_name, y_names):
     """
-    사용자가 지정하지 않은 열을 모두 삭제하고, 새로운 csv 파일을 생성하는 함수입니다.
+    사용자가 지정하지 않은 열을 모두 삭제하고, 새로운 csv 파일을 생성하는 함수
     입력: DataFrame 객체, 파일 경로, X축의 이름, Y축의 이름 리스트
     출력: 새로운 csv 파일 경로
     """
+    #df = df.applymap(lambda x: x.replace(' ', '') if isinstance(x, str) else x)
+    for col in df.columns:
+        if df[col].dtype == object:  # 문자열 데이터만 공백 제거
+            df[col] = df[col].str.replace(' ', '')
+
     df = df[[x_name] + y_names]
     dir_name = os.path.dirname(file_path)
     new_file_path = os.path.join(dir_name, "[processed]" + os.path.basename(file_path))
@@ -50,31 +55,33 @@ def create_new_csv(df, file_path, x_name, y_names):
 
 def convert_time_to_ms(df, x_name):
     """
-    "TIME"열의 데이터를 밀리세컨드로 변환하는 함수입니다.
+    "TIME"열의 데이터를 밀리세컨드로 변환하는 함수
     입력: DataFrame 객체, X축의 이름
     출력: 데이터가 변환된 DataFrame 객체
     """
     if x_name == "TIME":
-        df[x_name] = df[x_name].apply(lambda x: datetime.datetime.strptime(x, '%H:%M:%S.%f').time())
-        df[x_name] = df[x_name].apply(lambda x: (x.hour * 3600 + x.minute * 60 + x.second) * 1000 + x.microsecond / 1000)
+        # 첫 두 행을 제외하고 적용
+        df.loc[2:, x_name] = df.loc[2:, x_name].apply(lambda x: datetime.datetime.strptime(x, '%H:%M:%S.%f').time())
+        df.loc[2:, x_name] = df.loc[2:, x_name].apply(lambda x: (x.hour * 3600 + x.minute * 60 + x.second) * 1000 + x.microsecond / 1000)
         print(f"{x_name} 열의 데이터가 밀리세컨드로 변환되었습니다.")
     return df
 
 def convert_to_float(df, y_names):
     """
-    Y축의 데이터를 float 형식으로 변환하는 함수입니다.
+    Y축의 데이터를 float 형식으로 변환하는 함수
     입력: DataFrame 객체, Y축의 이름 리스트
     출력: 데이터가 변환된 DataFrame 객체
     """
     for y_name in y_names:
-        if df[y_name].dtype != np.float:
+        #if df[y_name].dtype != float: <-- not use numpy
+        if df[y_name].dtype != np.float64:    
             print(f"{y_name} 열의 데이터를 float 형식으로 변환합니다.")
             df[y_name] = df[y_name].astype(float)
     return df
 
 def replace_repeated_values_with_min(df, y_names):
     """
-    Y축의 데이터가 반복되면 최소값으로 대체하는 함수입니다.
+    Y축의 데이터가 반복되면 최소값으로 대체하는 함수
     입력: DataFrame 객체, Y축의 이름 리스트
     출력: 데이터가 변환된 DataFrame 객체
     """
@@ -86,7 +93,7 @@ def replace_repeated_values_with_min(df, y_names):
 
 def fill_blank_with_average(df, y_names):
     """
-    Y축의 데이터가 없는 경우 평균값으로 채우는 함수입니다.
+    Y축의 데이터가 없는 경우 평균값으로 채우는 함수
     입력: DataFrame 객체, Y축의 이름 리스트
     출력: 데이터가 변환된 DataFrame 객체
     """
@@ -97,7 +104,7 @@ def fill_blank_with_average(df, y_names):
 
 def create_dict_from_csv(new_file_path, x_name, y_names):
     """
-    새로운 csv 파일로부터 딕셔너리를 생성하는 함수입니다.
+    새로운 csv 파일로부터 딕셔너리를 생성하는 함수
     입력: 새로운 csv 파일 경로, X축의 이름, Y축의 이름 리스트
     출력: 데이터 딕셔너리
     """
@@ -111,7 +118,7 @@ def create_dict_from_csv(new_file_path, x_name, y_names):
 
 def draw_graph(data_dict, x_name, y_names):
     """
-    그래프를 그리는 함수입니다.
+    그래프를 그리는 함수
     입력: 데이터 딕셔너리, X축의 이름, Y축의 이름 리스트
     출력: 없음
     """
@@ -138,7 +145,7 @@ def draw_graph(data_dict, x_name, y_names):
 
 def main():
     """
-    메인 함수입니다.
+    메인 함수
     입력: 없음
     출력: 없음
     """
