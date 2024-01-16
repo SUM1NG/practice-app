@@ -67,31 +67,26 @@ def process_data(file_path, x_name, y_names):
 
     # 빈 값은 앞뒤 값의 평균으로 대체
     for y_name in y_names:
-        df[y_names].interpolate(method='linear', limit_direction ='both', inplace=True)
+        df[y_name].interpolate(method='linear', limit_direction ='both', inplace=True)
 
-    raw_data_dict = {x_name: df[x_name].tolist()}
-    for y_name in y_names:
-        raw_data_dict[y_name] = df[y_name].tolist()
-
-    return df, raw_data_dict, x_units, y_units
+    return df, x_units, y_units
 
 # MAF Moving Average Filter(이동 평균 필터) 적용하는 함수
-def apply_maf(df, y_names, window_size=3):
-
+def apply_maf(df, y_names, window_size):
     # 원본 데이터프레임 복사
     mdf = df.copy()
 
     # MAF 적용
     for y_name in y_names:
         mdf[y_name] = df[y_name].rolling(window=window_size, center=True).mean()
+    
+    # NaN 값을 포함하는 행 제거
+    mdf.dropna(inplace=True)
+
     return mdf
 
 # Kalman Filter(칼만 필터) 적용하는 함수
 def apply_kalman(df, x_name, y_names):
-
-    # 데이터를 담을 딕셔너리 생성    
-    filtered_data_dict = {x_name: df[x_name].tolist()}
-    
     # 원본 데이터프레임 복사
     kdf = df.copy()
 
@@ -104,9 +99,9 @@ def apply_kalman(df, x_name, y_names):
         kf.F = np.array([[1.]])  # state transition matrix
         kf.H = np.array([[1.]])  # measurement function
         kf.x = np.array([0.])  # initial state
-        kf.P *= 1000.  # covariance matrix
-        kf.R = 50  # state uncertainty
-        kf.Q = 0.5  # process uncertainty
+        kf.P *= 100.  # covariance matrix
+        kf.R = 5  # state uncertainty
+        kf.Q = 2  # process uncertainty
 
         # 칼만 필터 적용
         smoothed_state_means = np.zeros(measurements.shape)
@@ -117,10 +112,20 @@ def apply_kalman(df, x_name, y_names):
 
         kdf[y_name] = smoothed_state_means.flatten()
 
-        # 필터링된 데이터를 딕셔너리에 저장
-        filtered_data_dict[y_name] = kdf[y_name].tolist()
+    # NaN 값을 포함하는 행 제거
+    kdf.dropna(inplace=True)
 
-    return kdf, filtered_data_dict
+    return kdf
+
+def calculate_filtering_percentage(original_df, filtered_df, y_names):
+    percent = {}
+    for y_name in y_names:
+        original_data = original_df[y_name]
+        filtered_data = filtered_df[y_name]
+        deviation = np.mean(np.abs(original_data - filtered_data))
+        percentage = (deviation / np.mean(np.abs(original_data))) * 100
+        percent[y_name] = percentage
+    return percent
 
 # 데이터 그래프 그리는 함수
 def plot_graphs(df, kdf, x_name, y_names, x_units, y_units):
@@ -150,22 +155,40 @@ def plot_graphs(df, kdf, x_name, y_names, x_units, y_units):
     plt.show()
 
 def main():
-    file_path, x_name, y_names = get_user_input()
+    # 유저 입력 받기
+    #file_path, x_name, y_names = get_user_input()
+    file_path = "C:/Users/APTech-dev03/Documents/2. 프로젝트/KAI 제공자료/FA-50_VADR/test2.csv"
+    x_name = "TIME"
+    y_names = ["NZ","LONGACCEL","NY"]
 
+    # 데이터 전처리
+    df, x_units, y_units = process_data(file_path, x_name, y_names)
+
+    # Raw Data 출력
     print("Saving raw data dictionary as csv:")
-    df, raw_data_dict, x_units, y_units = process_data(file_path, x_name, y_names)
     output_to_csv(df, file_path, 'processed')
 
+
+    # MAF Data 출력
     print("Saving MAF data dictionary as csv:")
-    mdf = apply_maf(df, y_names, window_size=3)
+    mdf = apply_maf(df, y_names, 1)
+    mdf_percent = calculate_filtering_percentage(df, mdf, y_names)  # MAF에 대한 필터링 백분율
+    for y_name in y_names:
+        print(f"For {y_name}, the data was filtered by approximately {mdf_percent[y_name]:.2f}% in MAF")
     output_to_csv(mdf, file_path, 'maf')
 
+    # Kalman Data 출력
     print("Saving Kalman data dictionary as csv:")
-    kdf, filtered_data_dict = apply_kalman(mdf, x_name, y_names)
+    kdf = apply_kalman(mdf, x_name, y_names)
+    kdf_percent = calculate_filtering_percentage(df, kdf, y_names)  # Kalman 필터에 대한 필터링 백분율
+    for y_name in y_names:
+        print(f"For {y_name}, the data was filtered by approximately {kdf_percent[y_name]:.2f}% in Kalman filter")
     output_to_csv(kdf, file_path, 'kalman')
 
+    # 그래프 출력
     plot_graphs(df, kdf, x_name, y_names, x_units, y_units)
 
+# 메인 함수 콜
 if __name__ == "__main__":
     main()
 
