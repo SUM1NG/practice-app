@@ -122,7 +122,7 @@ def apply_kalman(df, x_name, y_names):
 
     return kdf, filtered_data_dict
 
-# 데이터 그래프 그리는 함수
+"""# 데이터 그래프 그리는 함수
 def plot_graphs(df, kdf, x_name, y_names, x_units, y_units):
     # 그래프를 세로로 쌓되, 각 y_axis에 대해 두 개의 그래프 (원시 데이터와 필터링된 데이터)를 가로로 배치.
     fig, axs = plt.subplots(len(y_names), 2, figsize=(25, 12))
@@ -148,7 +148,42 @@ def plot_graphs(df, kdf, x_name, y_names, x_units, y_units):
 
     plt.tight_layout()
     plt.show()
+"""
+# 데이터 그래프 그리는 함수
+def plot_graphs(df, kdf, x_name, y_names, x_units, y_units, maf_percentages, kalman_percentages):
+    # 그래프를 세로로 쌓되, 각 y_axis에 대해 두 개의 그래프 (원시 데이터와 필터링된 데이터)를 가로로 배치.
+    fig, axs = plt.subplots(len(y_names), 2, figsize=(25, 12))
 
+    for i, y_name in enumerate(y_names):
+        y_unit = y_units[i]
+        
+        # 원시 데이터 그래프
+        axs[i, 0].plot(df[x_name], df[y_name], label='Raw Data')
+        axs[i, 0].set_title(f'{y_name} (Raw Data)')
+        axs[i, 0].set_xlabel('Time (ms)')
+        axs[i, 0].set_ylabel(y_unit)
+        axs[i, 0].grid(True)
+        axs[i, 0].yaxis.tick_left()
+
+        # 필터링된 데이터 그래프 (MAF)
+        axs[i, 1].plot(kdf[x_name], mdf[y_name], label='Filtered Data (MAF)', color='orange')
+        axs[i, 1].set_title(f'{y_name} (Filtered Data, MAF, filtered: {maf_percentages[y_name]:.2f}%)')
+        axs[i, 1].set_xlabel('Time (ms)')
+        axs[i, 1].set_ylabel(y_unit)
+        axs[i, 1].grid(True)
+        axs[i, 1].yaxis.tick_left()
+
+        # 필터링된 데이터 그래프 (Kalman)
+        axs[i, 2].plot(kdf[x_name], kdf[y_name], label='Filtered Data (Kalman)', color='red')
+        axs[i, 2].set_title(f'{y_name} (Filtered Data, Kalman, filtered: {kalman_percentages[y_name]:.2f}%)')
+        axs[i, 2].set_xlabel('Time (ms)')
+        axs[i, 2].set_ylabel(y_unit)
+        axs[i, 2].grid(True)
+        axs[i, 2].yaxis.tick_left()
+
+    plt.tight_layout()
+    plt.show()
+    
 def main():
     file_path, x_name, y_names = get_user_input()
 
