@@ -7,9 +7,11 @@ try:
     import matplotlib.pyplot as plt
     import matplotlib.colors as mcolors
     import numpy as np
+    import tkinter as tk
+    from tkinter import font as tkFont, ttk
     from filterpy.kalman import KalmanFilter
 except ImportError:
-    os.system('pip install pandas matplotlib numpy filterpy')
+    os.system('pip install pandas matplotlib numpy tkinter filterpy')
 
 
 # 사용자로부터 필요한 정보 입력받기
@@ -234,15 +236,15 @@ def apply_rainflow(df, y_names):
 
     return rf_cycles  # 결과 딕셔너리 반환
 
-# 도수분포표 및 3D 히스토그램 그리는 함수
+# 히스토그램 출력 함수
 def draw_graphs(rf_cycles):
-    # 도수분포표와 3D 히스토그램이 모두 들어갈 수 있도록 충분히 큰 figure 생성
+    # 2D와 3D 히스토그램이 모두 들어갈 수 있도록 충분히 큰 figure 생성
     fig = plt.figure(figsize=(8 * len(rf_cycles), 8))
 
     # 색상 그라디언트 생성
     cmap = mcolors.LinearSegmentedColormap.from_list("", ["blue", "red"])
 
-    # 도수분포표 그리기
+    # 2D 히스토그램 그리기
     for i, (y_name, cycles) in enumerate(rf_cycles.items(), 1):
         ax = fig.add_subplot(2, len(rf_cycles), i)
         frequencies = [cycle[1] - cycle[0] for cycle in cycles]
@@ -287,12 +289,59 @@ def draw_graphs(rf_cycles):
     plt.show()
 
 
+def frequency_distribution(rf_cycles):
+    fdf_dict = {} # 결과를 저장할 딕셔너리
+
+    for y_name, cycles in rf_cycles.items():
+        # 빈도 분포 계산
+        frequencies = [cycle[1] - cycle[0] for cycle in cycles]
+
+        # 빈도분포를 10개의 구간으로 나눔
+        bins = pd.cut(frequencies, bins=10)
+
+        # 각 구간에 속하는 값의 개수를 계산
+        fdf = pd.value_counts(bins, sort=False).reset_index().sort_values(by='index')
+
+        # 결과를 딕셔너리에 저장
+        fdf_dict[y_name] = fdf
+
+    return fdf_dict
+
+def draw_table(fdf_dict):
+    window = tk.Tk()
+    
+    # 스타일 설정
+    style = ttk.Style()
+    style.configure('Treeview', rowheight=25)  # 행 높이 조절
+    style.configure('Treeview', font=('Arial', 12))  # 폰트 크기 조절
+    style.configure('Treeview.Heading', font=('Arial', 14, 'bold'))  # 헤더 폰트 설정
+
+    # 각 fdf에 대해 표와 레이블을 생성
+    for y_name, fdf in fdf_dict.items():
+        frame = tk.Frame(window)
+        frame.pack(fill='x')
+
+        # 레이블 생성
+        label = tk.Label(frame, text=f"Frequency Distribution for {y_name}", font=('Arial', 16, 'bold'), bg='light gray')
+        label.pack(fill='x')
+
+        # 표 생성
+        table = ttk.Treeview(frame, columns=list(fdf.columns), show='headings')
+        for column in fdf.columns:
+            table.heading(column, text=column)
+        for row in fdf.values:
+            table.insert('', 'end', values=tuple(row))
+        table.pack()
+
+    window.mainloop()
+
 def main():
     # 유저 입력 받기
     #file_path, x_name, y_names = get_user_input()
 
     # Input File (Temporary, for testing)
-    file_path = "C:/Users/APTech-dev03/Documents/2. 프로젝트/KAI 제공자료/FA-50_VADR/test2.csv"
+    # file_path = "C:/Users/APTech-dev03/Documents/2. 프로젝트/KAI 제공자료/FA-50_VADR/test2.csv"
+    file_path = "C:/Users/Paul Kim/Documents/@_DOCS_@/VSCode Repo/데이터/하중2.csv"
     x_name = "TIME"
     y_names = ["NZ","LONGACCEL","NY"]
 
@@ -311,11 +360,11 @@ def main():
     # 데이터 전처리
     df, x_units, y_units = process_data(file_path, x_name, y_names, filter_min, filter_max)
 
-    # Raw Data 출력
+    # Raw Data
     print("Saving raw data dictionary as csv:")
     output_to_csv(df, file_path, 'processed')
 
-    # MAF Data 출력
+    # Moving Average Filter
     print("Saving MAF data dictionary as csv:")
     mdf = apply_maf(df, y_names, window_size)
     mdf_percent = calculate_filtering_percentage(df, mdf, y_names)  # MAF에 대한 필터링 백분율
@@ -323,7 +372,7 @@ def main():
         print(f"For {y_name}, the data was filtered by approximately {mdf_percent[y_name]:.2f}% in MAF")
     output_to_csv(mdf, file_path, 'maf')
 
-    # Kalman Data 출력
+    # Kalman Filter
     print("Saving Kalman data dictionary as csv:")
     kdf = apply_kalman(mdf, x_name, y_names, P_value, R_value, Q_value)
     kdf_percent = calculate_filtering_percentage(df, kdf, y_names)  # Kalman 필터에 대한 필터링 백분율
@@ -331,16 +380,24 @@ def main():
         print(f"For {y_name}, the data was filtered by approximately {kdf_percent[y_name]:.2f}% in Kalman filter")
     output_to_csv(kdf, file_path, 'kalman')
 
-    # Rainflow Counting 출력
+    # Rainflow Counting
     print("Saving Rainflow data dictionary as csv:")
     rdf = apply_rainflow(kdf, y_names)
     output_rf_cycles_to_csv(rdf, file_path, 'rainflow')
-  
-    # 그래프 출력
+
+    # Frequency Distribution
+    print("Saving Frequency Distribution dictionary as csv:")
+    fdf = frequency_distribution(rdf)
+    output_to_csv(fdf, file_path, 'frequency')
+
+    # 도수분포표 그리기
+    draw_table(fdf)
+
+    # 그래프 그리기
     plot_graphs(df, kdf, mdf, x_name, y_names, x_units, y_units, mdf_percent, kdf_percent)
 
     # Rainflow Counting 결과 출력
-    draw_graphs(rdf)  # 도수분포표 출력 # 히스토그램 출력
+    draw_graphs(rdf)  # 2D, 3D 히스토그램 출력
 
 # 메인 함수 콜
 if __name__ == "__main__":
