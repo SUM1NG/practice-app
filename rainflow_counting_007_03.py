@@ -82,7 +82,7 @@ def plot_data(df, x_name, y_names, x_units, y_units):
 # 데이터 그래프 그리는 함수
 def plot_both_data(df, kdf, x_name, y_names, x_units, y_units):
     # 그래프를 세로로 쌓되, 각 y_axis에 대해 두 개의 그래프 (원시 데이터와 필터링된 데이터)를 가로로 배치.
-    fig, axs = plt.subplots(len(y_names), 2, figsize=(30, 15))
+    fig, axs = plt.subplots(len(y_names), 2, figsize=(25, 12))
 
     for i, y_name in enumerate(y_names):
         y_unit = y_units[i]
@@ -96,7 +96,7 @@ def plot_both_data(df, kdf, x_name, y_names, x_units, y_units):
         axs[i, 0].yaxis.tick_left()
 
         # 필터링된 데이터 그래프
-        axs[i, 1].plot(df[x_name], kdf[y_name], label='Filtered Data', color='orange')
+        axs[i, 1].plot(kdf[x_name], kdf[y_name], label='Filtered Data', color='orange')
         axs[i, 1].set_title(f'{y_name} (Filtered Data)')
         axs[i, 1].set_xlabel('Time (ms)')
         axs[i, 1].set_ylabel(y_unit)
@@ -116,8 +116,8 @@ def kalman_filter(df, y_names):
         kf.F = np.array([[1.]])  # state transition matrix
         kf.H = np.array([[1.]])  # measurement function
         kf.x = np.array([0.])  # initial state
-        kf.P *= 1000.  # covariance matrix
-        kf.R = 15  # state uncertainty
+        kf.P *= 500.  # covariance matrix
+        kf.R = 150  # state uncertainty
         kf.Q = 0.5  # process uncertainty
 
         # 칼만 필터 적용
