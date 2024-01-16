@@ -55,8 +55,11 @@ def process_data(file_path, x_name, y_names):
     for y_name in y_names:
         df[y_name].interpolate(method='linear', limit_direction ='both', inplace=True)
 
-    return df, x_units, y_units
+    raw_data_dict = {x_name: df[x_name].tolist()}
+    for y_name in y_names:
+        raw_data_dict[y_name] = df[y_name].tolist()
 
+    return df, raw_data_dict, x_units, y_units
 
 """
 # 데이터 그래프 그리는 함수
