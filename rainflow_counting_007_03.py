@@ -81,24 +81,27 @@ def plot_data(df, x_name, y_names, x_units, y_units):
 """
 # 데이터 그래프 그리는 함수
 def plot_both_data(df, kdf, x_name, y_names, x_units, y_units):
-    # 그래프를 세로로 쌓음
-    fig, axs = plt.subplots(len(y_names), 1, figsize=(25, 12))
+    # 그래프를 세로로 쌓되, 각 y_axis에 대해 두 개의 그래프 (원시 데이터와 필터링된 데이터)를 가로로 배치.
+    fig, axs = plt.subplots(len(y_names), 2, figsize=(30, 15))
 
-    for ax, y_name, y_unit in zip(axs, y_names, y_units):
-        ax.plot(df[x_name], df[y_name], label='Raw Data')  # Raw Data 그래프
-        ax.plot(df[x_name], kdf[y_name], label='Filtered Data')  # Filtered Data 그래프
-        ax.set_title(y_name)
-        ax.set_xlabel('Time (ms)')
-        ax.set_ylabel(y_unit)
+    for i, y_name in enumerate(y_names):
+        y_unit = y_units[i]
+        
+        # 원시 데이터 그래프
+        axs[i, 0].plot(df[x_name], df[y_name], label='Raw Data')
+        axs[i, 0].set_title(f'{y_name} (Raw Data)')
+        axs[i, 0].set_xlabel('Time (ms)')
+        axs[i, 0].set_ylabel(y_unit)
+        axs[i, 0].grid(True)
+        axs[i, 0].yaxis.tick_left()
 
-        # 그래프에 세로선과 가로선 추가
-        ax.grid(True)
-
-        # 레이블을 왼쪽에 위치시킴
-        ax.yaxis.tick_left()
-
-        # 범례 추가
-        ax.legend()
+        # 필터링된 데이터 그래프
+        axs[i, 1].plot(df[x_name], kdf[y_name], label='Filtered Data', color='orange')
+        axs[i, 1].set_title(f'{y_name} (Filtered Data)')
+        axs[i, 1].set_xlabel('Time (ms)')
+        axs[i, 1].set_ylabel(y_unit)
+        axs[i, 1].grid(True)
+        axs[i, 1].yaxis.tick_left()
 
     plt.tight_layout()
     plt.show()
@@ -114,8 +117,8 @@ def kalman_filter(df, y_names):
         kf.H = np.array([[1.]])  # measurement function
         kf.x = np.array([0.])  # initial state
         kf.P *= 1000.  # covariance matrix
-        kf.R = 5  # state uncertainty
-        kf.Q = 1  # process uncertainty
+        kf.R = 15  # state uncertainty
+        kf.Q = 0.5  # process uncertainty
 
         # 칼만 필터 적용
         smoothed_state_means = np.zeros(measurements.shape)
