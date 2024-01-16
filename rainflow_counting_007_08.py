@@ -5,10 +5,9 @@ import os
 try:
     import pandas as pd
     import matplotlib.pyplot as plt
+    import matplotlib.colors as mcolors
     import numpy as np
     from filterpy.kalman import KalmanFilter
-    from matplotlib.colors import Normalize
-    from matplotlib.cm import get_cmap
 except ImportError:
     os.system('pip install pandas matplotlib numpy filterpy')
 
@@ -227,23 +226,25 @@ def draw_graphs(rf_cycles):
     # 도수분포표와 3D 히스토그램이 모두 들어갈 수 있도록 충분히 큰 figure 생성
     fig = plt.figure(figsize=(8 * len(rf_cycles), 8))
 
-    norm = Normalize(vmin=0, vmax=1)
-    cmap = get_cmap("coolwarm")
-    
+    # 색상 그라디언트 생성
+    cmap = mcolors.LinearSegmentedColormap.from_list("", ["blue", "red"])
+
     # 도수분포표 그리기
     for i, (y_name, cycles) in enumerate(rf_cycles.items(), 1):
         ax = fig.add_subplot(2, len(rf_cycles), i)
         frequencies = [cycle[1] - cycle[0] for cycle in cycles]
+        n, bins, patches = ax.hist(frequencies, bins=100, density=True)
         
-        color_values = norm(frequencies)
-        colors = cmap(color_values)
+        # 히스토그램 막대에 색상 그라디언트 적용
+        bin_centers = 0.5 * (bins[:-1] + bins[1:])
+        col = bin_centers - min(bin_centers)
+        col /= max(col)
+        for c, p in zip(col, patches):
+            plt.setp(p, 'facecolor', cmap(c))
 
-        ax.hist(frequencies, bins=100, density=True)
         ax.set_title(f"Frequency Distribution for {y_name}")
         ax.set_xlabel("Cycle")
         ax.set_ylabel("Frequency")
-
-
 
     # 3D 히스토그램 그리기
     for i, (y_name, cycles) in enumerate(rf_cycles.items(), 1):
@@ -259,7 +260,11 @@ def draw_graphs(rf_cycles):
         dx = dy = 0.5 * np.ones_like(z_pos)
         dz = hist.flatten()
 
-        ax.bar3d(x_pos, y_pos, z_pos, dx, dy, dz, color='b', zsort='average')
+        # 3D 히스토그램 막대에 색상 그라디언트 적용
+        dz_norm = dz - dz.min()
+        dz_norm /= dz_norm.ptp()
+        ax.bar3d(x_pos, y_pos, z_pos, dx, dy, dz, color=cmap(dz_norm), zsort='average')
+
         ax.set_title(f"3D Histogram for {y_name}")
         ax.set_xlabel('Cycle Start')
         ax.set_ylabel('Cycle End')
@@ -267,6 +272,7 @@ def draw_graphs(rf_cycles):
 
     plt.tight_layout()
     plt.show()
+
 
 def main():
     # 유저 입력 받기
