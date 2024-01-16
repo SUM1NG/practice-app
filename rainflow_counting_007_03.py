@@ -57,10 +57,12 @@ def process_data(file_path, x_name, y_names):
 
     return df, x_units, y_units
 
+
+"""
 # 데이터 그래프 그리는 함수
 def plot_data(df, x_name, y_names, x_units, y_units):
     # 그래프를 세로로 쌓음
-    fig, axs = plt.subplots(len(y_names), 1, figsize=(35, 15))
+    fig, axs = plt.subplots(len(y_names), 1, figsize=(20, 8))
 
     for ax, y_name, y_unit in zip(axs, y_names, y_units):
         ax.plot(df[x_name], df[y_name])
@@ -73,6 +75,30 @@ def plot_data(df, x_name, y_names, x_units, y_units):
 
         # 레이블을 왼쪽에 위치시킴
         ax.yaxis.tick_left()
+
+    plt.tight_layout()
+    plt.show()
+"""
+# 데이터 그래프 그리는 함수
+def plot_both_data(df, kdf, x_name, y_names, x_units, y_units):
+    # 그래프를 세로로 쌓음
+    fig, axs = plt.subplots(len(y_names), 1, figsize=(25, 12))
+
+    for ax, y_name, y_unit in zip(axs, y_names, y_units):
+        ax.plot(df[x_name], df[y_name], label='Raw Data')  # Raw Data 그래프
+        ax.plot(df[x_name], kdf[y_name], label='Filtered Data')  # Filtered Data 그래프
+        ax.set_title(y_name)
+        ax.set_xlabel('Time (ms)')
+        ax.set_ylabel(y_unit)
+
+        # 그래프에 세로선과 가로선 추가
+        ax.grid(True)
+
+        # 레이블을 왼쪽에 위치시킴
+        ax.yaxis.tick_left()
+
+        # 범례 추가
+        ax.legend()
 
     plt.tight_layout()
     plt.show()
@@ -116,14 +142,16 @@ def main():
     df.to_csv(new_file_path, index=False)
 
     # Raw Data 그래프 그리기
-    plot_data(df, x_name, y_names, x_units, y_units)
+    #plot_data(df, x_name, y_names, x_units, y_units)
 
     # Kalman Filter 적용
     kdf = kalman_filter(df, y_names)
 
     # Filtered Data 그래프 그리기
-    plot_data(kdf, x_name, y_names, x_units, y_units)
+    #plot_data(kdf, x_name, y_names, x_units, y_units)
 
+    # Raw & Filtered Data 그래프 그리기
+    plot_both_data(df, kdf, x_name, y_names, x_units, y_units)
 
 if __name__ == "__main__":
     main()
