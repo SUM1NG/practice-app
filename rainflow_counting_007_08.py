@@ -66,6 +66,18 @@ def output_to_csv(df, file_path, prefix):
     new_file_path = os.path.join(os.path.dirname(file_path), f"[{prefix}]{os.path.basename(file_path)}")
     df.to_csv(new_file_path, index=False)
     
+
+# Rainflow Counting 결과를 CSV로 저장하는 함수
+def output_rf_cycles_to_csv(rf_cycles, file_path, prefix):
+    # 각 y_name에 대한 cycles를 별도의 열로 가지는 DataFrame 생성
+    max_len = max(len(cycles) for cycles in rf_cycles.values())
+    data = {y_name: pd.Series(cycles, dtype='object') for y_name, cycles in rf_cycles.items()}
+    df = pd.DataFrame(data)
+
+    # DataFrame을 CSV로 저장
+    new_file_path = os.path.join(os.path.dirname(file_path), f"[{prefix}]{os.path.basename(file_path)}")
+    df.to_csv(new_file_path, index=False)
+
 # 시간 문자열(HH:MM:SS.FFF)을 밀리초로 변환하는 함수
 def time_str_to_milliseconds(time_str):
     # 예외 처리 추가
@@ -144,14 +156,15 @@ def apply_kalman(df, x_name, y_names, P_value, R_value, Q_value):
 
     return kdf  # 처리된 데이터프레임 반환
 
+# 각 필터로 인해 제거된 데이터량% 연산
 def calculate_filtering_percentage(original_df, filtered_df, y_names):
-    percent = {}
-    for y_name in y_names:
-        original_data = original_df[y_name]
-        filtered_data = filtered_df[y_name]
-        deviation = np.mean(np.abs(original_data - filtered_data))
-        percentage = (deviation / np.mean(np.abs(original_data))) * 100
-        percent[y_name] = percentage
+    percent = {} # Dict 생성
+    for y_name in y_names: # y_name 순환
+        original_data = original_df[y_name] # 기준 데이터 설정
+        filtered_data = filtered_df[y_name] # 필터 데이터 설정
+        deviation = np.mean(np.abs(original_data - filtered_data)) # 각 행마다 계산한 기준 대비 필터 차이 평균치의 절대값
+        percentage = (deviation / np.mean(np.abs(original_data))) * 100 # %로 환산
+        percent[y_name] = percentage # y_name별 저장
     return percent
 
 # MAF 및 Kalman 필터 결과 그래프 그리는 함수
@@ -197,8 +210,8 @@ def apply_rainflow(df, y_names):
     # 각 y_name에 대해 Rainflow Counting 적용
     for y_name in y_names:
         rdf = df[y_name]  # 해당 y_name의 데이터
-        stack = []
-        cycles = []
+        stack = [] # 스택 Init
+        cycles = [] # 싸이클 Init
 
         for point in rdf:
             while len(stack) >= 3:
@@ -320,14 +333,14 @@ def main():
 
     # Rainflow Counting 출력
     print("Saving Rainflow data dictionary as csv:")
-    cycles = apply_rainflow(kdf, y_names)
-    output_to_csv(kdf, file_path, 'rainflow')
+    rdf = apply_rainflow(kdf, y_names)
+    output_rf_cycles_to_csv(rdf, file_path, 'rainflow')
   
     # 그래프 출력
     plot_graphs(df, kdf, mdf, x_name, y_names, x_units, y_units, mdf_percent, kdf_percent)
 
     # Rainflow Counting 결과 출력
-    draw_graphs(cycles)  # 도수분포표 출력 # 히스토그램 출력
+    draw_graphs(rdf)  # 도수분포표 출력 # 히스토그램 출력
 
 # 메인 함수 콜
 if __name__ == "__main__":
