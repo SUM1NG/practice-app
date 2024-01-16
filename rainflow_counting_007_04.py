@@ -112,27 +112,34 @@ def plot_both_data(df, kdf, x_name, y_names, x_units, y_units):
 # 칼만 필터 적용하는 함수
 def kalman_filter(df, y_names):
     for y_name in y_names:
-        measurements = np.array(df[y_name])
+        # 데이터를 담을 딕셔너리 생성
+        filtered_data_dict = {x_name: df[x_name].tolist()}
 
-        # 칼만 필터 초기화
-        kf = KalmanFilter(dim_x=1, dim_z=1)
-        kf.F = np.array([[1.]])  # state transition matrix
-        kf.H = np.array([[1.]])  # measurement function
-        kf.x = np.array([0.])  # initial state
-        kf.P *= 500.  # covariance matrix
-        kf.R = 150  # state uncertainty
-        kf.Q = 0.5  # process uncertainty
+        for y_name in y_names:
+            measurements = np.array(df[y_name])
 
-        # 칼만 필터 적용
-        smoothed_state_means = np.zeros(measurements.shape)
-        for i in range(len(measurements)):
-            kf.predict()
-            kf.update(measurements[i])
-            smoothed_state_means[i] = kf.x
+            # 칼만 필터 초기화
+            kf = KalmanFilter(dim_x=1, dim_z=1)
+            kf.F = np.array([[1.]])  # state transition matrix
+            kf.H = np.array([[1.]])  # measurement function
+            kf.x = np.array([0.])  # initial state
+            kf.P *= 500.  # covariance matrix
+            kf.R = 150  # state uncertainty
+            kf.Q = 0.5  # process uncertainty
 
-        df[y_name] = smoothed_state_means.flatten()
+            # 칼만 필터 적용
+            smoothed_state_means = np.zeros(measurements.shape)
+            for i in range(len(measurements)):
+                kf.predict()
+                kf.update(measurements[i])
+                smoothed_state_means[i] = kf.x
 
-    return df
+            df[y_name] = smoothed_state_means.flatten()
+
+            # 필터링된 데이터를 딕셔너리에 저장
+            filtered_data_dict[y_name] = df[y_name].tolist()
+
+    return df, filtered_data_dict
 
 def main():
     # 사용자로부터 필요한 정보 입력받기
