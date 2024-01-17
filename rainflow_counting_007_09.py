@@ -353,8 +353,8 @@ def main():
     # 유저로부터 입력 받는 부분, 테스트를 위해 주석 처리
 
     # Input File (Temporary, for testing)
-    # file_path = "C:/Users/APTech-dev03/Documents/2. 프로젝트/KAI 제공자료/FA-50_VADR/test2.csv"
-    file_path = "C:/Users/Paul Kim/Documents/@_DOCS_@/VSCode Repo/데이터/하중2.csv"  # 테스트용 파일 경로 설정
+    file_path = "C:/Users/APTech-dev03/Documents/2. 프로젝트/KAI 제공자료/FA-50_VADR/test2.csv"
+    # file_path = "C:/Users/Paul Kim/Documents/@_DOCS_@/VSCode Repo/데이터/하중2.csv"  # 테스트용 파일 경로 설정
     x_name = "TIME"  # x축의 이름을 "TIME"으로 설정
     y_names = ["NZ","LONGACCEL","NY"]  # y축의 이름을 "NZ", "LONGACCEL", "NY"로 설정
 
