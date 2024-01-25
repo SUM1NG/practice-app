@@ -31,8 +31,6 @@ def process_data(file_path, x_name, y_names):
     df = df[[x_name] + y_names]  # 열 순서를 [x_name, y_names] 순서로 재배치
 
     # 단위 저장 후 해당 행 삭제
-    x_units = df.loc[0, x_name]  # x축 단위 저장
-    y_units = [df.loc[0, y_name] for y_name in y_names]  # y축 단위들 저장
     df = df.drop([0])  # 단위를 저장한 첫 번째 행 삭제
     df = df.reset_index(drop=True)  # 인덱스 재설정
 
@@ -53,8 +51,7 @@ def process_data(file_path, x_name, y_names):
         df[y_name].interpolate(method='linear', limit_direction ='both', inplace=True)  # 빈 값이 있는 경우, 앞뒤 값의 선형적인 평균으로 대체
 
     return df
-    #return df, x_units, y_units  # 처리된 DataFrame과 단위들 반환
-
+    
 
 # 결과를 CSV 파일로 출력하는 함수
 def output_to_csv(df, file_path, prefix):
