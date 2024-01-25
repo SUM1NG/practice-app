@@ -15,27 +15,43 @@ def process_data(file_path, x_name, y_names, sampling_rate, multiply_constant):
     # 단위 제거
     df = df.drop(df.index[0])
     
-    
-
-    # 불필요한 열 삭제 및 재배치
-    #df = df[[x_name] + y_names]  # 필요한 열만 선택해서 DataFrame 재생성
-    
-    #df = adjust_sampling_rate(df, sampling_rate)
     # 불필요한 열 삭제 및 재배치
     cols = [col for col in [x_name] + y_names if col in df.columns]  # DataFrame에 존재하는 열만 선택
     if len(cols) < len([x_name] + y_names):
         print("Some columns are not found in the DataFrame.")
     df = df[cols]  # 필요한 열만 선택해서 DataFrame 재생성
     
+    # 샘플링주기에 따라 데이터 삭제
     df = adjust_sampling_rate(df, sampling_rate)
     
+    # 숫자를 float으로 변경
     df[y_names] = df[y_names].astype(float)
-    df[y_names] = df[y_names] * multiply_constant
+    
+    # 각 열의 소수점 이하 최대 자릿수를 찾음
+    decimal_places = find_decimal_places(df, y_names)
+    
+    # 각 열을 상수로 곱하고, 원래의 소수점 이하 자릿수로 반올림
+    for col in y_names:
+        df[col] = (df[col] * multiply_constant).round(decimal_places[col])
 
     # 열 이름 변경
     df = rename_columns(df, y_names)
     
     return df
+
+# 각 열의 소수점 이하 최대 자릿수를 찾는 함수
+def find_decimal_places(df, cols):
+    decimal_places = {}
+    for col in cols:
+        # 각 값이 소수인지 확인
+        is_decimal = df[col].apply(lambda x: '.' in str(x))
+        # 소수라면 소수점 이하 자릿수를 찾음
+        if is_decimal.any():
+            places = df[col].apply(lambda x: len(str(x).split('.')[1]) if '.' in str(x) else 0)
+            decimal_places[col] = places.max()
+        else:
+            decimal_places[col] = 0
+    return decimal_places
 
 def rename_columns(df, y_names):
     # 열 이름을 변경할 딕셔너리 생성
