@@ -52,7 +52,8 @@ def process_data(file_path, x_name, y_names):
     for y_name in y_names:  # 각 y_name에 대해
         df[y_name].interpolate(method='linear', limit_direction ='both', inplace=True)  # 빈 값이 있는 경우, 앞뒤 값의 선형적인 평균으로 대체
 
-    return df, x_units, y_units  # 처리된 DataFrame과 단위들 반환
+    return df
+    #return df, x_units, y_units  # 처리된 DataFrame과 단위들 반환
 
 
 # 결과를 CSV 파일로 출력하는 함수
@@ -79,9 +80,8 @@ def main():
     # 유저로부터 입력 받는 부분, 테스트를 위해 주석 처리
 
     # Input File (Temporary, for testing)
-    file_path_slash = "C:\Users\APTech-dev03\Documents\2. 프로젝트\Acts Tech 제공할 자료\50-004_230414\50-004_2304141.csv"\
-    
-    file_path = file_path_slash.replace("\\", "/")
+    file_path = "C:/Users/APTech-dev03/Documents/2. 프로젝트/Acts Tech 제공할 자료/50-004_230414/50-004_2304141.csv"
+
     # file_path = "C:/Users/Paul Kim/Documents/@_DOCS_@/VSCode Repo/데이터/하중2.csv"  # 테스트용 파일 경로 설정
     x_name = "TIME"  # x축의 이름을 "TIME"으로 설정
     y_names = ["PRESALT", "CAS", "N2", "N1", "PLA", "TET", "T1", "VENACTSTKE", "TFAT", "STATPRES", "FVG", "CVG"]  # y축 이름 설정
