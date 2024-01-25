@@ -7,52 +7,68 @@ try:
 except ImportError:
     os.system('pip install pandas')
 
-"""
-# 사용자로부터 필요한 정보 입력받기
-def get_user_input():
-    file_path = input("Enter the file path: ").replace('"', '')  # 파일 경로 입력 받음
-    x_name = input("Enter the x-axis name: ").strip()  # x축 이름 입력 받음
-    y_names = [name.strip() for name in input("Enter the y-axis names (separated by comma): ").split(',')]  # y축 이름들 입력 받음
-    return file_path, x_name, y_names  # 입력 받은 정보 반환
-"""
-
 # 데이터 처리하는 함수
-def process_data(file_path, x_name, y_names):
+def process_data(file_path, x_name, y_names, sampling_rate, multiply_constant):
     # 데이터 읽기
     df = pd.read_csv(file_path)  # csv 파일 읽어와서 DataFrame 생성
 
-    # 불필요한 열 삭제
-    df = df[[x_name] + y_names]  # 필요한 열만 선택해서 DataFrame 재생성
-
-    # 공백 제거
-    df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)  # 각 열의 값이 문자열인 경우, 앞뒤 공백 제거
-
-    # 열 순서 재배치
-    df = df[[x_name] + y_names]  # 열 순서를 [x_name, y_names] 순서로 재배치
-
-    # 단위 저장 후 해당 행 삭제
-    df = df.drop([0])  # 단위를 저장한 첫 번째 행 삭제
-    df = df.reset_index(drop=True)  # 인덱스 재설정
-
-    # 공백 제거
-    df = df.apply(lambda x: x.str.strip() if x.dtype == "object" else x)  # 각 열의 값이 문자열인 경우, 앞뒤 공백 제거
-
-    # HH:MM:SS.FFF를 밀리초로 변환
-    df[x_name] = df[x_name].apply(time_str_to_milliseconds)  # 시간 문자열을 밀리초로 변환하는 함수 적용
-
-    # 데이터 타입 확인 및 변환
-    df = df.astype(float, errors='raise')  # 각 열의 값들을 실수로 변환
-
-    # 동일한 `x_name` 값을 가진 행 제거
-    df = df.drop_duplicates(subset=[x_name], keep='first')  # x_name 값이 동일한 행 중 첫 번째 행만 남기고 삭제
-
-    # 빈 값은 앞뒤 값의 평균으로 대체
-    for y_name in y_names:  # 각 y_name에 대해
-        df[y_name].interpolate(method='linear', limit_direction ='both', inplace=True)  # 빈 값이 있는 경우, 앞뒤 값의 선형적인 평균으로 대체
-
-    return df
+    # 단위 제거
+    df = df.drop(df.index[0])
+    
     
 
+    # 불필요한 열 삭제 및 재배치
+    #df = df[[x_name] + y_names]  # 필요한 열만 선택해서 DataFrame 재생성
+    
+    #df = adjust_sampling_rate(df, sampling_rate)
+    # 불필요한 열 삭제 및 재배치
+    cols = [col for col in [x_name] + y_names if col in df.columns]  # DataFrame에 존재하는 열만 선택
+    if len(cols) < len([x_name] + y_names):
+        print("Some columns are not found in the DataFrame.")
+    df = df[cols]  # 필요한 열만 선택해서 DataFrame 재생성
+    
+    df = adjust_sampling_rate(df, sampling_rate)
+    
+    df[y_names] = df[y_names].astype(float)
+    df[y_names] = df[y_names] * multiply_constant
+
+    # 열 이름 변경
+    df = rename_columns(df, y_names)
+    
+    return df
+
+def rename_columns(df, y_names):
+    # 열 이름을 변경할 딕셔너리 생성
+    rename_dict = {}
+    for i, old_name in enumerate(y_names):
+        # Create the new name
+        new_name = 'var_' + str(i+1).zfill(2)
+        
+        # Add the old name and new name to the dictionary
+        rename_dict[old_name] = new_name
+
+    # 열 이름 변경
+    df = df.rename(columns=rename_dict)
+    
+    return df    
+
+def adjust_sampling_rate(df, sampling_rate):
+    
+    # 샘플링 레이트에 따라 열 삭제
+    if sampling_rate == 16:
+        pass  # 원본 그대로 유지
+    elif sampling_rate == 8:
+        df = df.iloc[::2]  # 매 두 번째 행만 유지
+    elif sampling_rate == 4:
+        df = df.iloc[::4]  # 매 네 번째 행만 유지
+    elif sampling_rate == 1:
+        df = df.iloc[::16]  # 매 16번째 행만 유지
+    else:
+        print("Invalid sampling rate. Please choose from 1, 4, 8, or 16.")
+        return None
+    
+    return df
+    
 # 결과를 CSV 파일로 출력하는 함수
 def output_to_csv(df, file_path, prefix):
     new_file_path = os.path.join(os.path.dirname(file_path), f"[{prefix}]{os.path.basename(file_path)}")  # 새 파일 경로 생성
@@ -74,16 +90,46 @@ def time_str_to_milliseconds(time_str):
 def main():
     # 유저 입력 받기
     #file_path, x_name, y_names = get_user_input()
-    # 유저로부터 입력 받는 부분, 테스트를 위해 주석 처리
-
-    # Input File (Temporary, for testing)
-    file_path = "C:/Users/APTech-dev03/Documents/2. 프로젝트/Acts Tech 제공할 자료/50-004_230414/50-004_2304141.csv"
-
-    # file_path = "C:/Users/Paul Kim/Documents/@_DOCS_@/VSCode Repo/데이터/하중2.csv"  # 테스트용 파일 경로 설정
+  
+    #file_path = "C:/Users/APTech-dev03/Documents/2. 프로젝트/Acts Tech 제공할 자료/50-004_230414/50-004_2304141.csv"
+    file_path = "C:/Users/Paul Kim/Documents/@_DOCS_@/@@APTECH/FA-50 PHMS/VADR/50-004_230414/50-004_2304141.csv"
     x_name = "TIME"  # x축의 이름을 "TIME"으로 설정
     y_names = ["PRESALT", "CAS", "N2", "N1", "PLA", "TET", "T1", "VENACTSTKE", "TFAT", "STATPRES", "FVG", "CVG"]  # y축 이름 설정
 
-    """
+    # 데이터 전처리 수행
+    df = process_data(file_path, x_name, y_names, 8, 0.916392981528929836)
+
+    # 원시 데이터를 csv 파일로 저장
+    print("Saving raw data dictionary as csv:")
+    output_to_csv(df, file_path, 'processed')
+    
+ 
+# 메인 함수 호출
+if __name__ == "__main__":
+    main()
+    
+
+
+
+"""
+# 사용자로부터 필요한 정보 입력받기
+def get_user_input():
+    file_path = input("Enter the file path: ").replace('"', '')  # 파일 경로 입력 받음
+    x_name = input("Enter the x-axis name: ").strip()  # x축 이름 입력 받음
+    y_names = [name.strip() for name in input("Enter the y-axis names (separated by comma): ").split(',')]  # y축 이름들 입력 받음
+    return file_path, x_name, y_names  # 입력 받은 정보 반환
+
+
+    # 초 단위 데이터만 남기고 제거
+    #df = df[df[x_name].str.endswith('.000')]
+
+    # 빈 값은 앞뒤 값의 평균으로 대체
+    #for y_name in y_names:  # 각 y_name에 대해
+    #    df[y_name].interpolate(method='linear', limit_direction ='both', inplace=True)  # 빈 값이 있는 경우, 앞뒤 값의 선형적인 평균으로 대체
+"""
+
+
+"""
     [Continuous]
     2 ALT Pressure Altitude [8, -1,500~80,000ft]= "PRESALT"
     5 V(M) Calibrated Air Speed(CAS) [8, 70~1,000kts]= "CAS"
@@ -97,17 +143,4 @@ def main():
     61 P0 Selected Static Pressure [8, 0.8~32(in-Hg)]= "STATPRES"
     68 FVG Fan Variable Geometry [8, -10~100°(deg)]= "FVG"
     69 CVG Core Variable Geometry [8, -10~100°(deg)]= "CVG"
-    """
-    
-    # 데이터 전처리 수행
-    df = process_data(file_path, x_name, y_names)
-
-    # 원시 데이터를 csv 파일로 저장
-    print("Saving raw data dictionary as csv:")
-    output_to_csv(df, file_path, 'processed')
-    
- 
-# 메인 함수 호출
-if __name__ == "__main__":
-    main()
-    
+"""
