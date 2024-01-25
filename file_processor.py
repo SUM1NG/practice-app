@@ -97,9 +97,8 @@ def main():
     61 P0 Selected Static Pressure [8, 0.8~32(in-Hg)]= "STATPRES"
     68 FVG Fan Variable Geometry [8, -10~100°(deg)]= "FVG"
     69 CVG Core Variable Geometry [8, -10~100°(deg)]= "CVG"
-    
-    
     """
+    
     # 데이터 전처리 수행
     df = process_data(file_path, x_name, y_names)
 
