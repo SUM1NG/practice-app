@@ -8,7 +8,7 @@ except ImportError:
     os.system('pip install pandas')
 
 # 데이터 처리하는 함수
-def process_data(file_path, x_name, y_names, sampling_rate, multiply_constant):
+def process_data(file_path, x_name, y_names, y_name, sampling_rate, multiply_constant):
     # 데이터 읽기
     df = pd.read_csv(file_path)  # csv 파일 읽어와서 DataFrame 생성
 
@@ -22,8 +22,14 @@ def process_data(file_path, x_name, y_names, sampling_rate, multiply_constant):
     df = df[cols]  # 필요한 열만 선택해서 DataFrame 재생성
     
     # 샘플링주기에 따라 데이터 삭제
-    df = adjust_sampling_rate(df, sampling_rate)
+    #df = adjust_sampling_rate(df, sampling_rate)
     
+    # y_names 열에서 결측치 또는 빈칸 삭제
+    df = df.dropna(subset=y_names)
+    for col in y_names:
+        df = df[df[col].notnull()]
+    df = df[df[y_name].notnull()]
+
     # 숫자를 float으로 변경
     df[y_names] = df[y_names].astype(float)
     
@@ -33,6 +39,9 @@ def process_data(file_path, x_name, y_names, sampling_rate, multiply_constant):
     # 각 열을 상수로 곱하고, 원래의 소수점 이하 자릿수로 반올림
     for col in y_names:
         df[col] = (df[col] * multiply_constant).round(decimal_places[col])
+
+    # "TIME" 열의 값을 1부터 시작하는 연속된 정수로 바꾸기
+    df[x_name] = range(1, len(df) + 1)
 
     # 열 이름 변경
     df = rename_columns(df, y_names)
@@ -107,13 +116,15 @@ def main():
     # 유저 입력 받기
     #file_path, x_name, y_names = get_user_input()
   
-    #file_path = "C:/Users/APTech-dev03/Documents/2. 프로젝트/Acts Tech 제공할 자료/50-004_230414/50-004_2304141.csv"
-    file_path = "C:/Users/Paul Kim/Documents/@_DOCS_@/@@APTECH/FA-50 PHMS/VADR/50-004_230414/50-004_2304141.csv"
+    file_path = "C:/Users/APTech-dev03/Documents/2. 프로젝트/Acts Tech 제공할 자료/50-004_230414/50-004_2304141.csv"
+    #file_path = "C:/Users/APTech-dev03/Documents/2. 프로젝트/Acts Tech 제공할 자료/50-004_230417/50-004_2304171.csv"
+    
+    #file_path = "C:/Users/Paul Kim/Documents/@_DOCS_@/@@APTECH/FA-50 PHMS/VADR/50-004_230414/50-004_2304141.csv"
     x_name = "TIME"  # x축의 이름을 "TIME"으로 설정
     y_names = ["PRESALT", "CAS", "N2", "N1", "PLA", "TET", "T1", "VENACTSTKE", "TFAT", "STATPRES", "FVG", "CVG"]  # y축 이름 설정
 
     # 데이터 전처리 수행
-    df = process_data(file_path, x_name, y_names, 8, 0.916392981528929836)
+    df = process_data(file_path, x_name, y_names, "TFAT", 8, 0.927392981538929836)
 
     # 원시 데이터를 csv 파일로 저장
     print("Saving raw data dictionary as csv:")
